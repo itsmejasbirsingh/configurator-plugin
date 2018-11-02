@@ -2,7 +2,8 @@
 /*
 	Plugin Name: Configurator
 */
-include('configurator.php');
+require_once('configurator.php');
+
 class Configurator extends WP_Widget {
 
 	/**
@@ -24,15 +25,31 @@ class Configurator extends WP_Widget {
 	 */
 	public function widget( $args, $instance ) {
 		//What to show in sidebar frontend
-	echo "Machine Life Greater Than";
-	echo "<select>";
-		echo "<option>1 Year</option>";
-		echo "<option>2 Year</option>";
-		echo "<option>3 Year</option>";
-		echo "<option>4 Year</option>";
-		echo "<option>5 Year</option>";
-		echo "<option>6 Year</option>";
-	echo "</select>";
+		global $wpdb;
+		echo $args['before_widget'];
+			$title = ! empty( $instance['title'] ) ? $instance['title'] : esc_html__( 'Title', 'text_domain' );
+			$attribute = ! empty( $instance['attribute'] ) ? $instance['attribute'] : '';
+			if($title && $attribute)
+			{
+				$attribute = 'jsr_'.str_replace('-', '_', $attribute);
+				
+			 
+				$qry = "SELECT DISTINCT `meta_value` from {$wpdb->prefix}postmeta WHERE meta_key = '".$attribute."' ORDER BY `meta_id` DESC";
+				$attrs = $wpdb->get_results($qry);
+				?>
+					<ul>
+				<?php
+				foreach($attrs as $attr)
+				{
+					?>
+						<li><input type="checkbox"> <?php echo $attr->meta_value; ?></li>
+					<?php
+				}
+				?>
+				</ul>
+				<?php
+			}
+		echo $args['after_widget'];
 
 	}
 
@@ -42,23 +59,46 @@ class Configurator extends WP_Widget {
 	 * @param array $instance The widget options
 	 */
 	public function form( $instance ) {
-		// What to show in widget area admin
-		$machine_life_text = ! empty( $instance['machine_life_text'] ) ? $instance['machine_life_text'] : esc_html__( 'Machine Life greater than', 'text_domain' );
+		global $wpdb;
 		
-		$machine_life_year = ! empty( $instance['machine_life_year'] ) ? $instance['machine_life_year'] : esc_html__( '6', 'text_domain' );
+		// What to show in widget area admin
+		$title = ! empty( $instance['title'] ) ? $instance['title'] : esc_html__( 'Title', 'text_domain' );
+		$attribute = ! empty( $instance['attribute'] ) ? $instance['attribute'] : '';
+		
+		// get all configurator meta keys
+		$qry = "SELECT distinct `meta_key` from {$wpdb->prefix}postmeta WHERE meta_key LIKE 'jsr_%' ORDER BY `meta_id` DESC";
+		$meta_keys = $wpdb->get_results($qry);
 		?>
 
-
 		<p>
-		<label for="<?php echo esc_attr( $this->get_field_id( 'machine_life_text' ) ); ?>"><?php esc_attr_e( 'Title:', 'text_domain' ); ?></label> 
-		<input class="machine-life _text" id="<?php echo esc_attr( $this->get_field_id( 'machine_life_text' ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( 'machine_life_text' ) ); ?>" type="text" value="<?php echo esc_attr( $machine_life_text ); ?>">
+		<label for="<?php echo esc_attr( $this->get_field_id( 'title' ) ); ?>"><?php esc_attr_e( 'Title:', 'text_domain' ); ?></label> 
+		<input class="widefat _title" id="<?php echo esc_attr( $this->get_field_id( 'title' ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( 'title' ) ); ?>" type="text" value="<?php echo esc_attr( $title ); ?>">
 		</p>
 
+		<?php if (count($meta_keys) > 0) { ?>
 		<p>
-		<label for="<?php echo esc_attr( $this->get_field_id( 'machine_life_year' ) ); ?>"><?php esc_attr_e( 'Years:', 'text_domain' ); ?></label> 
-		<input class="machine-life _years" id="<?php echo esc_attr( $this->get_field_id( 'machine_life_year' ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( 'machine_life_year' ) ); ?>" type="text" value="<?php echo esc_attr( $machine_life_year ); ?>">
-		</p>
+		<label for="<?php echo esc_attr( $this->get_field_id( 'attribute' ) ); ?>"><?php esc_attr_e( 'Attribute:', 'text_domain' ); ?></label> 
+		
+		<select class="widefat _attribute" id="<?php echo esc_attr( $this->get_field_id( 'attribute' ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( 'attribute' ) ); ?>">
+		<?php
+		foreach($meta_keys as $metakey)
+		{
+			 $metaKeyName = ltrim($metakey->meta_key,'jsr_');
+			 $metaKeyName = str_replace('_', '-', $metaKeyName);
+			 ?>
+			<option <?php if($attribute == $metaKeyName) echo "selected"; ?>><?php echo $metaKeyName; ?></option>
+			<?php
+		}
+		?>
+		</select>
+		</p>	
 		<?php 
+		}
+		else
+		{
+			echo "<p>Add one or more configurator attribute in any product!</p>";
+		}
+
 	}
 
 	/**
@@ -72,9 +112,9 @@ class Configurator extends WP_Widget {
 	public function update( $new_instance, $old_instance ) {
 		// Updating widget options
 		$instance = array();
-		$instance['machine_life_text'] = ( ! empty( $new_instance['machine_life_text'] ) ) ? sanitize_text_field( $new_instance['machine_life_text'] ) : '';
-		$instance['machine_life_year'] = ( ! empty( $new_instance['machine_life_year'] ) ) ? sanitize_text_field( $new_instance['machine_life_year'] ) : '';
-
+		$instance['title'] = ( ! empty( $new_instance['title'] ) ) ? sanitize_text_field( $new_instance['title'] ) : '';
+		$instance['attribute'] = ( ! empty( $new_instance['attribute'] ) ) ? sanitize_text_field( $new_instance['attribute'] ) : '';
+		
 		return $instance;
 	}
 }
