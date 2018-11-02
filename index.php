@@ -11,7 +11,7 @@ class Configurator extends WP_Widget {
 	 */
 	public function __construct() {
 		$widget_ops = array( 
-			'classname' => 'my_configurator',
+			'classname' => 'my_configurator woocommerce widget_layered_nav woocommerce-widget-layered-nav',
 			'description' => 'Display machine configuration',
 		);
 		parent::__construct( 'configurator_filter', 'Configurator', $widget_ops );
@@ -31,18 +31,42 @@ class Configurator extends WP_Widget {
 			$attribute = ! empty( $instance['attribute'] ) ? $instance['attribute'] : '';
 			if($title && $attribute)
 			{
+
 				echo $args['before_title'] . apply_filters( 'widget_title', $instance['title'] ) . $args['after_title'];
-				$attribute = 'jsr_'.str_replace('-', '_', $attribute);
+				$jsr_attribute = 'jsr_'.str_replace('-', '_', $attribute);
 							 
-				$qry = "SELECT DISTINCT `meta_value` from {$wpdb->prefix}postmeta WHERE meta_key = '".$attribute."' ORDER BY `meta_id` DESC";
+				$qry = "SELECT DISTINCT `meta_value` from {$wpdb->prefix}postmeta WHERE meta_key = '".$jsr_attribute."' ORDER BY `meta_id` DESC";
 				$attrs = $wpdb->get_results($qry);
 				?>
 					<ul>
 				<?php
+				if(count($_GET) > 0)
+				{
+					$operator = '&';
+				}
+				else
+				{
+					$operator = '?';
+				}
 				foreach($attrs as $attr)
 				{
+					
+					 if(isset($_GET['filter_'.$attribute]) && $_GET['filter_'.$attribute] == $attr->meta_value) { 
+					 	$li_class = "chosen"; 
+					 	$url = $_SERVER['REQUEST_URI'];
+					 	$url = str_replace($operator.'filter_'.$attribute.'='.$attr->meta_value,'',$url);
+					 } 
+					 else
+					 {
+					 	$li_class = '';
+					 	 $url = $_SERVER['REQUEST_URI'].$operator.'filter_'.$attribute.'='.$attr->meta_value;
+					 }
 					?>
-						<li><input type="checkbox"> <?php echo $attr->meta_value; ?></li>
+						<li class="<?php echo $li_class; ?>">
+						
+							<a href="<?php echo $url; ?>"> <?php echo UcFirst($attr->meta_value); ?>
+							</a>
+						</li>
 					<?php
 				}
 				?>
