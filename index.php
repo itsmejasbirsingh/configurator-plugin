@@ -31,9 +31,9 @@ class Configurator extends WP_Widget {
 			$attribute = ! empty( $instance['attribute'] ) ? $instance['attribute'] : '';
 			if($title && $attribute)
 			{
+				echo $args['before_title'] . apply_filters( 'widget_title', $instance['title'] ) . $args['after_title'];
 				$attribute = 'jsr_'.str_replace('-', '_', $attribute);
-				
-			 
+							 
 				$qry = "SELECT DISTINCT `meta_value` from {$wpdb->prefix}postmeta WHERE meta_key = '".$attribute."' ORDER BY `meta_id` DESC";
 				$attrs = $wpdb->get_results($qry);
 				?>
